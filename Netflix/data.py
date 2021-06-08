@@ -37,7 +37,7 @@ class Movies:
             # groupby 
             df = df.groupby('movie_id')['rating'].agg(['mean','count']).reset_index()
             
-            # merge with movie titles (see function below)
+            # merge with movie titles (see --> def movie_titles)
             titles = self.movie_titles().merge(df, on='movie_id')
             titles.to_csv(os.path.join(self.ROOT, 'raw_data', 'data.csv'), index=False)
         
