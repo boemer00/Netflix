@@ -5,9 +5,9 @@ class Movies:
 
     def get_data(self):
         """ get_data read all txt file and store them in one file """
-        root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        if not os.path.isfile('data.csv'): 
-            data = open('data.csv', mode='w')
+        root = os.path.dirname(os.path.dirname(__file__))
+        if not os.path.isfile('../../raw_data/data.csv'): 
+            data = open('../../raw_data/data.csv', mode='w')
             row = list()
             raw_datasets = ['combined_data_1.txt', 'combined_data_2.txt',
                             'combined_data_3.txt', 'combined_data_4.txt']
