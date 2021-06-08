@@ -17,7 +17,6 @@ class Movies:
                 path_list.append(file_path)
             
             for file in path_list:
-                
                     with open(file) as f:
                         for line in f:
                             del row[:]
