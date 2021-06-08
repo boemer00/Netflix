@@ -52,6 +52,6 @@ class Movies:
 
 
 if __name__ == "__main__":
-    print(Movies().get_data())
-    print(Movies().movie_titles())
+    print(Movies().get_data().head())
+    print(Movies().movie_titles().head())
     
