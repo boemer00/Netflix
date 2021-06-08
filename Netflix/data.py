@@ -17,7 +17,6 @@ class Movies:
                 path_list.append(file_path)
             
             for file in path_list:
-                
                     with open(file) as f:
                         for line in f:
                             del row[:]
@@ -52,6 +51,6 @@ class Movies:
 
 
 if __name__ == "__main__":
-    print(Movies().get_data())
-    print(Movies().movie_titles())
+    print(Movies().get_data().head())
+    print(Movies().movie_titles().head())
     
