@@ -4,6 +4,7 @@ import numpy as np
 import re
 
 
+
 def load_data(n):
     df = pd.read_csv("raw_data/merged_movies_by_index.csv", nrows=n)
     
@@ -49,6 +50,52 @@ def data_wrangling(df):
     freq_genre = df['Genre'].mode()[0]
     df['Genre'] = df['Genre'].replace(np.nan, freq_genre)
     df['Plot'] = df['Plot'].replace(np.nan,'unknown')
+    
+    #Transform Released Dates to Released Month
+    df["Released"] = df["Released"].fillna("Non Available")
+    def remove_digit(x):
+        return ''.join([i for i in x if not i.isdigit()]).strip()
+    df["Released_month"] = df["Released"].apply(remove_digit)
+    df = df.drop(columns ="Released")
+        
+    #Join values from Rated Column
+    #Children
+    df["Rated"] = df[["Rated"]].replace("TV-G","Kids")
+    df["Rated"] = df[["Rated"]].replace("TV-PG","Kids")
+    df["Rated"] = df[["Rated"]].replace("Kid","Kids")
+    df["Rated"] = df[["Rated"]].replace("TV-Y7","Kids")
+    df["Rated"] = df[["Rated"]].replace("TV-Y7-FV","Kids")
+    df["Rated"] = df[["Rated"]].replace("TV-Y","Kids")
+
+    #17 and over 
+    df["Rated"] = df[["Rated"]].replace("TV-14","Teens")
+    df["Rated"] = df[["Rated"]].replace("PG-13","Teens")
+    df["Rated"] = df[["Rated"]].replace("TV-MA","Adult")
+    df["Rated"] = df[["Rated"]].replace("NC-17","Adult")
+    df["Rated"] = df[["Rated"]].replace("R","Adult")
+    df["Rated"] = df[["Rated"]].replace("18 and over","Adult")
+    df["Rated"] = df[["Rated"]].replace("Adult","17 and over")
+
+    #Not Rated
+    df["Rated"] = df[["Rated"]].fillna("Not Rated")
+    df["Rated"] = df[["Rated"]].replace("Unrated","Not Rated")
+    df["Rated"] = df[["Rated"]].replace("NOT RATED","Not Rated")
+    df["Rated"] = df[["Rated"]].replace("UNRATED","Not Rated")
+    df["Rated"] = df[["Rated"]].replace("E","Not Rated")
+
+    #Teens
+    df["Rated"] = df[["Rated"]].replace("TV-13","Teens")
+    df["Rated"] = df[["Rated"]].replace("PG","Teens")
+    df["Rated"] = df[["Rated"]].replace("M","Teens")
+
+    #General
+    df["Rated"] = df[["Rated"]].replace("G","General")
+    df["Rated"] = df[["Rated"]].replace("APPROVED","Approved")
+    df["Rated"] = df[["Rated"]].replace("Passed","General")
+    df["Rated"] = df[["Rated"]].replace("M/PG","General")
+    df["Rated"] = df[["Rated"]].replace("Approved","General")
+    df["Rated"] = df[["Rated"]].replace("GP","General")
+    df["Rated"] = df[["Rated"]].replace("X","Adult Movies")
     
     return df
 
