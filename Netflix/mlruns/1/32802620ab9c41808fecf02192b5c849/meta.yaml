@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/priscillafearn/code/priscillafearn/FinalProject/Netflix/Netflix/mlruns/1/32802620ab9c41808fecf02192b5c849/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '1'
+lifecycle_stage: active
+name: ''
+run_id: 32802620ab9c41808fecf02192b5c849
+run_uuid: 32802620ab9c41808fecf02192b5c849
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1623331733922
+status: 1
+tags: []
+user_id: unknown

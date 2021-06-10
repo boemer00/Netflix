@@ -1,0 +1,4 @@
+artifact_location: file:///Users/priscillafearn/code/priscillafearn/FinalProject/Netflix/Netflix/mlruns/1
+experiment_id: '1'
+lifecycle_stage: active
+name: Netflix_experiment
