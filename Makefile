@@ -53,3 +53,22 @@ pypi_test:
 
 pypi:
 	@twine upload dist/* -u $(PYPI_USERNAME)
+
+# ----------------------------------
+#      BUCKET SETUP
+# ----------------------------------
+
+# project id is the GCP project id
+PROJECT_ID=le-wagon-data-597
+
+# bucket name is the GCP bucket name
+BUCKET_NAME=wagon-data-597-netflix
+
+# choose region from https://cloud.google.com/storage/docs/locations#available_locations
+REGION=europe-west1
+
+set_project:
+	@gcloud config set project ${PROJECT_ID}
+
+create_bucket:
+	@gsutil mb -l ${REGION} -p ${PROJECT_ID} gs://${BUCKET_NAME}

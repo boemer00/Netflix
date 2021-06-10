@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 
 class Movies:
 
@@ -42,6 +43,9 @@ class Movies:
         
         return pd.read_csv(os.path.join(self.ROOT, 'raw_data', 'data.csv'))
 
+
+    ## -----------------------------
+    
     def movie_titles(self):
         """ import movie titles and add to grouped data file """
         df_title = pd.read_csv(os.path.join(self.ROOT, 'raw_data','movie_titles.csv'),
@@ -50,7 +54,41 @@ class Movies:
         return df
 
 
+    ## -----------------------------
+    
+    def data_wrangling(self):
+    """ cleaning irrelevant rows and columns """ 
+    
+    # drop irrelevant columns
+    df = self.drop(columns=['title', 'year', 'Awards', 'Poster', 'Metascore', 'DVD',
+                          'BoxOffice', 'Internet Movie Database','totalSeasons',
+                          'imdbVotes','Website', 'Response', 'Production', 'Metacritic', 'Ratings'])
+
+    ## fill nan and' min', convert to int and replace zero for the mean
+    df['Runtime'] = df['Runtime'].fillna(0).apply(lambda x: str(x).replace(',', ''))
+    df['Runtime'] = df['Runtime'].apply(lambda x: float(str(x).replace(' min', '')))
+    df['Runtime'] = df['Runtime'].replace(0, df['Runtime'].mean())
+    
+    ## fill nan and remove '%', convert to float and replace zero for the mean
+    df['Rotten Tomatoes'] = df['Rotten Tomatoes'].fillna(0) 
+    df['Rotten Tomatoes'] = df['Rotten Tomatoes'].apply(lambda x: float(str(x).replace('%', '')))
+    df['Rotten Tomatoes'] = df['Rotten Tomatoes'].replace(0, df['Rotten Tomatoes'].mean())
+    
+    ## dropna rows
+    df = df.dropna(subset = ['Actors', 'Director', 'Writer', 'Language'])
+    
+    ## replace with other frequent values
+    freq_country = df[['Country']].value_counts().reset_index()['Country'][0]
+    df['Country'] = df['Country'].replace(0, freq_country).replace('United States', freq_country)
+    freq_genre = df['Genre'].mode()[0]
+    df['Genre'] = df['Genre'].replace(np.nan, freq_genre)
+    df['Plot'] = df['Plot'].replace(np.nan,'unknown')
+    
+    return self
+    
+    
 if __name__ == "__main__":
     print(Movies().get_data().head())
     print(Movies().movie_titles().head())
+    print(Movies().data_wrangling().head())
     
