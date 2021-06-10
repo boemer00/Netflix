@@ -1,3 +1,4 @@
+from params import MLFLOW_URI
 import requests
 import numpy as np
 import pandas as pd
@@ -10,16 +11,18 @@ from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from data import DataSourcing
+from Netflix.data import load_data, data_wrangling
 import joblib
 from termcolor import colored
 from memoized_property import memoized_property
 from mlflow.tracking import MlflowClient 
+import mlflow
+from sklearn.compose import ColumnTransformer
 
 
 
-MLFLOW_URI = "https://mlflow.lewagon.co/"
-EXPERIMENT_NAME = "Netflix_experiment"
+EXPERIMENT_NAME = "Pris_LND_Netflix_experiment"
+MLFLOW_URI="https://mlflow.lewagon.co/"
 
 class Trainer(object):
     def __init__(self, X, y):
@@ -31,7 +34,13 @@ class Trainer(object):
         #self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size = 0.3)
         self.X = X
         self.y = y
+        # for MLFlow
+        self.experiment_name = EXPERIMENT_NAME
         
+    def set_experiment_name(self, experiment_name):
+        '''defines the experiment name for MLFlow'''
+        self.experiment_name = experiment_name
+    
     def set_pipeline(self):
         """defines the pipeline as a class attribute"""
         # Impute then Scale for numerical variables: 
@@ -47,25 +56,37 @@ class Trainer(object):
         # Paralellize "num_transformer" and "One hot encoder"
         preprocessor = ColumnTransformer([
             ('num_transformer', num_transformer, ['Year','Runtime']),
-            ('cat_transformer', cat_transformer, ['Rated', 'Language_binary'])],
+            ('cat_transformer', cat_transformer, ['Rated'])],
         remainder='passthrough')
 
         self.pipeline = Pipeline([
                 ('preprocessor', preprocessor),
                 ('linear_model', LinearRegression())
             ])
-    def fit_pipeline(self):
-        self.pipeline = self.pipeline.fit(self.X, self.y)
+    def run(self):
+        self.set_pipeline()
+        self.mlflow_log_param("model", "Linear")
+        self.pipeline.fit(self.X, self.y)
         print('pipeline fitted')
         
+    # def fit_pipeline(self):
+    #     self.pipeline = self.pipeline.fit(self.X, self.y)
+    #     print('pipeline fitted')
+        
     def evaluate(self, X_test, y_test):
+        """evaluates the pipeline on X and return the RMSE"""
         y_pred_train = self.pipeline.predict(self.X)
         mse_train = mean_squared_error(self.y, y_pred_train)
         rmse_train = np.sqrt(mse_train)
+    
+        self.mlflow_log_metric("rmse_train", rmse_train)
         
+
         y_pred_test = self.pipeline.predict(X_test)
         mse_test = mean_squared_error(y_test, y_pred_test)
         rmse_test = np.sqrt(mse_test)
+        self.mlflow_log_metric("rmse_test", rmse_test)
+        
         return (round(rmse_train, 3) ,round(rmse_test, 3))
         
     def predict(self, X):
@@ -107,16 +128,16 @@ class Trainer(object):
 if __name__ == "__main__":
     # Get and clean data
     N = 1000
-    df = DataSourcing()
-    df = df.load_data(N)
-    df = df.data_wrangling(df)
-    y = y
-    X = X
+    df = load_data(N)
+    df = data_wrangling(df)
+    y = df.avg_review_score
+    X = df[['Year','Runtime', "Rated"]]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-    # Train and save model, locally and
+    #Train and save model, locally and
     trainer = Trainer(X_train, y_train)
-    trainer.set_experiment_name('NetflixTeam')
+    trainer.set_experiment_name('Pris_LND_Netflix_experiment')
     trainer.run()
     rmse = trainer.evaluate(X_test, y_test)
     print(f"rmse: {rmse}")
     trainer.save_model()
+    
