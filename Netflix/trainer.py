@@ -18,10 +18,8 @@ from memoized_property import memoized_property
 from mlflow.tracking import MlflowClient 
 import mlflow
 from sklearn.compose import ColumnTransformer
+from Netflix.params import EXPERIMENT_NAME
 
-
-
-EXPERIMENT_NAME = "Pris_LND_Netflix_experiment"
 MLFLOW_URI="https://mlflow.lewagon.co/"
 
 class Trainer(object):
@@ -127,7 +125,7 @@ class Trainer(object):
 
 if __name__ == "__main__":
     # Get and clean data
-    N = 1000
+    N = 5000
     df = load_data(N)
     df = data_wrangling(df)
     y = df.avg_review_score
@@ -135,7 +133,7 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
     #Train and save model, locally and
     trainer = Trainer(X_train, y_train)
-    trainer.set_experiment_name('Pris_LND_Netflix_experiment')
+    trainer.set_experiment_name(EXPERIMENT_NAME)
     trainer.run()
     rmse = trainer.evaluate(X_test, y_test)
     print(f"rmse: {rmse}")

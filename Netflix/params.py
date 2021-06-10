@@ -1,7 +1,7 @@
 ### MLFLOW configuration - - - - - - - - - - - - - - - - - - -
 
 MLFLOW_URI = "https://mlflow.lewagon.co/"
-EXPERIMENT_NAME = "[UK] [London] [boemer] netflix + v1"
+EXPERIMENT_NAME = "[UK] [LDN] [PDR] netflix"
 
 ### DATA & MODEL LOCATIONS  - - - - - - - - - - - - - - - - - - -
 
