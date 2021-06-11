@@ -17,9 +17,9 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler, FunctionTransfo
 from sklearn.model_selection import train_test_split
 
 from Netflix.params import MLFLOW_URI, EXPERIMENT_NAME
-from Netflix.data import load_data, data_wrangling
-from Netflix.encoders import CleanRuntimeEncoder
-# from Netflix.encoders import CleanTomatoesEncoder, CleanCountryEncoder, CleanGenreEncoder
+from Netflix.data import load_data
+from Netflix.encoders import CleanRuntimeEncoder, CleanCountryEncoder
+# from Netflix.encoders import CleanTomatoesEncoder, CleanGenreEncoder
 
 import mlflow
 from mlflow.tracking import MlflowClient 
@@ -61,10 +61,10 @@ class Trainer(object):
             model = BaggingRegressor()
         elif estimator == 'Ada':
             model = AdaBoostRegressor()
-        elif estimator == 'Stacking':
-            model = StackingRegressor()
-        elif estimator == 'Voting':
-            model = VotingRegressor()
+        # elif estimator == 'Stacking':
+        #     model = StackingRegressor(estimators=estimator)
+        # elif estimator == 'Voting':
+        #     model = VotingRegressor(estimators=estimator)
         elif estimator == 'KNN':
             model = KNeighborsRegressor()    
         elif estimator == 'GBM':
@@ -76,7 +76,7 @@ class Trainer(object):
                 'n_estimators': range(60, 220, 20)}
             # 'max_depth' : [int(x) for x in np.linspace(10, 110, num = 11)]}
         elif estimator == 'xgboost':
-            model = XGBRegressor(objective='reg:squarederror', n_jobs=self.n_jobs, max_depth=10, learning_rate=0.05,
+            model = XGBRegressor(objective='reg:squarederror', n_jobs=-1, max_depth=10, learning_rate=0.05,
                                  gamma=3)
             self.model_params = {'max_depth': range(2, 40, 2),
                                  'n_estimators': range(60, 220, 40),
@@ -102,7 +102,7 @@ class Trainer(object):
         feateng_steps = self.kwargs.get('feateng', ['runtime'])
         pipe_runtime_features = Pipeline([('runtime', SimpleImputer(strategy='constant', fill_value="0")),
                                          ('runtime_encoder', CleanRuntimeEncoder())])
-        # pipe_country_features = Pipeline(('country', CleanCountryEncoder()))
+        pipe_country_features = Pipeline(('country', CleanCountryEncoder()))
         # pipe_genre_features = Pipeline(('genre', CleanGenreEncoder()))
         # pipe_year_features = Pipeline(('age', XXXXXX()))
         # pipe_rated_features = Pipeline(('rated', XXXXXX()))
@@ -120,18 +120,18 @@ class Trainer(object):
         
         # define default feature engineering blocks
         feateng_blocks = [
-            ('runtime', pipe_runtime_features, ['Runtime'])
-            # ('country', pipe_country_features, ['Country']), #custom USA
-            # ('genre', pipe_genre_features, ['Genre']),
-            # ('age', pipe_year_features, ['Year']), # custom class scale
-            # ('rated', pipe_rated_features, ['Rated']),
-            # ('released', pipe_released_features, ['Released']), # custom month back
-            # ('writer', pipe_writer_features, ['Writer']),
+            ('runtime', pipe_runtime_features, ['Runtime']),
+            ('country', pipe_country_features, ['Country'])
+            # ('genre', pipe_genre_features, ['Genre']), ## same as actors
+            # ('age', pipe_year_features, ['Year']), ## not done - custom class scale
+            # ('rated', pipe_rated_features, ['Rated']), #!!!! working
+            # ('released', pipe_released_features, ['Released']), #!!!! working
+            # ('writer', pipe_writer_features, ['Writer']), 
             # ('director', pipe_director_features, ['Director']),
             # ('actors', pipe_actors_features, ['Actors']),
-            # ('plot', pipe_plot_features, ['Plot']), # custom /vectorizer
-            # ('language', pipe_language_features, ['Language']), # custom binary
-            # ('production', pipe_production_features, ['Production']), # CountVectorizer
+            # ('plot', pipe_plot_features, ['Plot']), # ignore for now (custom /vectorizer)
+            # ('language', pipe_language_features, ['Language']), # not done - custom binary
+            # ('production', pipe_production_features, ['Production']), # same as actor
         ]
         
         # filter out some blocks according to input parameters
@@ -218,7 +218,8 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
     
     # train model
-    estimators = ['Linear', 'Lasso']
+    estimators = ['Lasso', 'Ridge', 'Linear', 'Bagging', 'Ada',
+                  'Stacking', 'Voting', 'KNN', 'GBM', 'RandomForest', 'xgboost']
     for estimator in estimators:
         params = {'estimator': estimator, 'feateng': ['runtime']}
         trainer = Trainer(X_train, y_train, **params)
