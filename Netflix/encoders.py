@@ -35,11 +35,11 @@ class CleanRuntimeEncoder(BaseEstimator, TransformerMixin):
         counter += int(x)
         return [counter]
     
-    def transform(self, x):
+    def transform(self, x, y=None):
         final = np.array([self.replace_strings(row) for row in x])
         return final
         
-    def fit(self, x):
+    def fit(self, x, y=None):
         return self
 
 # class CleanTomatoesEncoder(BaseEstimator, TransformerMixin):

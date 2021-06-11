@@ -18,7 +18,8 @@ from sklearn.model_selection import train_test_split
 
 from Netflix.params import MLFLOW_URI, EXPERIMENT_NAME
 from Netflix.data import load_data, data_wrangling
-from Netflix.encoders import CleanRuntimeEncoder, CleanTomatoesEncoder, CleanCountryEncoder, CleanGenreEncoder
+from Netflix.encoders import CleanRuntimeEncoder
+# from Netflix.encoders import CleanTomatoesEncoder, CleanCountryEncoder, CleanGenreEncoder
 
 import mlflow
 from mlflow.tracking import MlflowClient 
@@ -34,13 +35,14 @@ class Trainer(object):
     ESTIMATOR = "Linear"
     EXPERIMENT_NAME = "[UK] [London] [PDR] netflix"
     
-    def __init__(self, X, y):
+    def __init__(self, X, y, **kwargs):
         """
             X: pandas DataFrame
             y: pandas Series
         """
         self.pipeline = None
         #self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size = 0.3)
+        self.kwargs = kwargs
         self.X = X
         self.y = y
         # for MLFlow
@@ -97,50 +99,51 @@ class Trainer(object):
     def set_pipeline(self):
         """ defines the pipeline as a class attribute """
         # feature engineering pipeline blocks
-        pipe_runtime_features = Pipeline(('runtime', CleanRuntimeEncoder()))
-        pipe_country_features = Pipeline(('country', CleanCountryEncoder()))
-        pipe_genre_features = Pipeline(('genre', CleanGenreEncoder()))
+        feateng_steps = self.kwargs.get('feateng', ['runtime'])
+        pipe_runtime_features = Pipeline([('runtime', SimpleImputer(strategy='constant', fill_value="0")),
+                                         ('runtime_encoder', CleanRuntimeEncoder())])
+        # pipe_country_features = Pipeline(('country', CleanCountryEncoder()))
+        # pipe_genre_features = Pipeline(('genre', CleanGenreEncoder()))
         # pipe_year_features = Pipeline(('age', XXXXXX()))
         # pipe_rated_features = Pipeline(('rated', XXXXXX()))
         # pipe_released_features = Pipeline(('released', XXXXXX()))
-        pipe_writer_features = Pipeline([('writer', SimpleImputer(strategy='constant', fill_value='unknown')),
-                                ('writer_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})) 
-                                ('writer_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
-        pipe_director_features = Pipeline([('director', SimpleImputer(strategy='constant', fill_value='unknown')),
-                                ('director_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})) 
-                                ('director_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
-        pipe_actors_features = Pipeline([('actors', SimpleImputer(strategy='constant', fill_value='unknown')),
-                                ('actors_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})) 
-                                ('actors_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
+        # pipe_writer_features = Pipeline([('writer', SimpleImputer(strategy='constant', fill_value='unknown')),
+        #                         ('writer_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})) 
+        #                         ('writer_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
+        # pipe_director_features = Pipeline([('director', SimpleImputer(strategy='constant', fill_value='unknown')),
+        #                         ('director_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})) 
+        #                         ('director_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
+        # pipe_actors_features = Pipeline([('actors', SimpleImputer(strategy='constant', fill_value='unknown')),
+        #                         ('actors_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})) 
+        #                         ('actors_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
         
         
-        # define default feature engineering blocs
+        # define default feature engineering blocks
         feateng_blocks = [
-            ('runtime', pipe_runtime_features, ['Runtime']),
-            ('country', pipe_country_features, ['Country']), #custom USA
-            ('genre', pipe_genre_features, ['Genre']),
-            ('age', pipe_year_features, ['Year']), # custom class scale
-            ('rated', pipe_rated_features, ['Rated']),
-            ('released', pipe_released_features, ['Released']), # custom month back
-            ('writer', pipe_writer_features, ['Writer']),
-            ('director', pipe_director_features, ['Director']),
-            ('actors', pipe_actors_features, ['Actors']),
-            ('plot', pipe_plot_features, ['Plot']), # custom /vectorizer
-            ('language', pipe_language_features, ['Language']), # custom binary
-            ('production', pipe_production_features, ['Production']), # CountVectorizer
+            ('runtime', pipe_runtime_features, ['Runtime'])
+            # ('country', pipe_country_features, ['Country']), #custom USA
+            # ('genre', pipe_genre_features, ['Genre']),
+            # ('age', pipe_year_features, ['Year']), # custom class scale
+            # ('rated', pipe_rated_features, ['Rated']),
+            # ('released', pipe_released_features, ['Released']), # custom month back
+            # ('writer', pipe_writer_features, ['Writer']),
+            # ('director', pipe_director_features, ['Director']),
+            # ('actors', pipe_actors_features, ['Actors']),
+            # ('plot', pipe_plot_features, ['Plot']), # custom /vectorizer
+            # ('language', pipe_language_features, ['Language']), # custom binary
+            # ('production', pipe_production_features, ['Production']), # CountVectorizer
         ]
         
-        # filter out some bocks according to input parameters
-        for bloc in feateng_blocks:
-            if bloc[0] not in feateng_steps:
-                feateng_blocks.remove(bloc)
+        # filter out some blocks according to input parameters
+        for block in feateng_blocks:
+            if block[0] not in feateng_steps:
+                feateng_blocks.remove(block)
 
         features_encoder = ColumnTransformer(feateng_blocks, n_jobs=None, remainder="drop")
 
         self.pipeline = Pipeline(steps=[
                     ('features', features_encoder),
-                    ('rgs', self.get_estimator())],
-                                 memory=memory)
+                    ('rgs', self.get_estimator())])
         
         
     def run(self):
@@ -206,10 +209,7 @@ if __name__ == "__main__":
     # store the data in a DataFrame
     N = 5000
     df = load_data(N)
-    
-    # clean data
-    df = data_wrangling(df)
-    
+        
     # set X and y
     y = df.avg_review_score
     X = df[['Year','Runtime', "Rated"]]
@@ -218,14 +218,17 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
     
     # train model
-    trainer = Trainer(X_train, y_train)
-    trainer.set_experiment_name(EXPERIMENT_NAME)
-    trainer.run()
+    estimators = ['Linear', 'Lasso']
+    for estimator in estimators:
+        params = {'estimator': estimator, 'feateng': ['runtime']}
+        trainer = Trainer(X_train, y_train, **params)
+        trainer.set_experiment_name(EXPERIMENT_NAME)
+        trainer.run()
     
-    # evaluate the pipeline
-    rmse = trainer.evaluate(X_test, y_test)
-    print(f"rmse: {rmse}")
-    
-    # save model locally
-    trainer.save_model()
+        # evaluate the pipeline
+        rmse = trainer.evaluate(X_test, y_test)
+        print(f"rmse: {rmse}")
+        
+        # save model locally
+        trainer.save_model()
     
