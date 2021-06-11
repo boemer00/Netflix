@@ -18,8 +18,8 @@ from sklearn.model_selection import train_test_split
 
 from Netflix.params import MLFLOW_URI, EXPERIMENT_NAME
 from Netflix.data import load_data, data_wrangling
-from Netflix.encoders import CleanRuntimeEncoder
-# from Netflix.encoders import CleanTomatoesEncoder, CleanCountryEncoder, CleanGenreEncoder
+from Netflix.encoders import CleanRuntimeEncoder, CleanCountryEncoder
+# from Netflix.encoders import CleanTomatoesEncoder, CleanGenreEncoder
 
 import mlflow
 from mlflow.tracking import MlflowClient 
@@ -102,7 +102,7 @@ class Trainer(object):
         feateng_steps = self.kwargs.get('feateng', ['runtime'])
         pipe_runtime_features = Pipeline([('runtime', SimpleImputer(strategy='constant', fill_value="0")),
                                          ('runtime_encoder', CleanRuntimeEncoder())])
-        # pipe_country_features = Pipeline(('country', CleanCountryEncoder()))
+        pipe_country_features = Pipeline([('country', CleanCountryEncoder())])
         # pipe_genre_features = Pipeline(('genre', CleanGenreEncoder()))
         # pipe_year_features = Pipeline(('age', XXXXXX()))
         # pipe_rated_features = Pipeline(('rated', XXXXXX()))
@@ -120,8 +120,8 @@ class Trainer(object):
         
         # define default feature engineering blocks
         feateng_blocks = [
-            ('runtime', pipe_runtime_features, ['Runtime'])
-            # ('country', pipe_country_features, ['Country']), #custom USA
+            ('runtime', pipe_runtime_features, ['Runtime']),
+            ('country', pipe_country_features, ['Country'])
             # ('genre', pipe_genre_features, ['Genre']),
             # ('age', pipe_year_features, ['Year']), # custom class scale
             # ('rated', pipe_rated_features, ['Rated']),
