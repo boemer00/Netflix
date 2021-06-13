@@ -8,18 +8,21 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor, BaggingRegressor, AdaBoostRegressor
-from sklearn.ensemble import StackingRegressor, VotingRegressor 
+# from sklearn.experimental import enable_hist_gradient_boosting
+# from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor, BaggingRegressor
+from sklearn.ensemble import StackingRegressor, VotingRegressor, AdaBoostRegressor
 from sklearn.linear_model import Lasso, Ridge, LinearRegression
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, FunctionTransformer
 from sklearn.model_selection import train_test_split
+import xgboost
 
 from Netflix.params import MLFLOW_URI, EXPERIMENT_NAME
-from Netflix.data import load_data, data_wrangling
-from Netflix.encoders import CleanRuntimeEncoder
-# from Netflix.encoders import CleanTomatoesEncoder, CleanCountryEncoder, CleanGenreEncoder
+from Netflix.data import load_data
+from Netflix.encoders import CleanRuntimeEncoder, CleanReleasedEncoder, CleanCountryEncoder
+# from Netflix.encoders import CleanTomatoesEncoder, CleanGenreEncoder, CleanLanguageEncoder, CleanCountryEncoder
 
 import mlflow
 from mlflow.tracking import MlflowClient 
@@ -52,36 +55,69 @@ class Trainer(object):
     def get_estimator(self):
         estimator = self.kwargs.get('estimator', self.ESTIMATOR)
         if estimator == 'Lasso':
-            model = Lasso()
+            model = Lasso() # (alpha = 0) == Linear Regression
+            self.model_params = {'alpha':[1, 2, 3, 4, 5, 10],
+                                 'fit_intercept': [True, False],
+                                 'max_iter':[1000, 2000, 5000, 10000],
+                                 'random_state': 0}
         elif estimator == 'Ridge':
             model = Ridge()
+            self.model_params = {'alpha': [0, 0.2, 0.4, 0.6, 0.8],  # (alpha = 1) == Linear Regression
+                                 'normalize':[True, False],
+                                 'solver':['svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'],
+                                 'random_state': 0} 
         elif estimator == 'Linear':
             model = LinearRegression()
-        elif estimator == 'Bagging':
-            model = BaggingRegressor()
-        elif estimator == 'Ada':
-            model = AdaBoostRegressor()
-        elif estimator == 'Stacking':
-            model = StackingRegressor()
-        elif estimator == 'Voting':
-            model = VotingRegressor()
+            self.model_params = {'fit_intercept': [True, False],
+                                 'normalize': [True, False]}
         elif estimator == 'KNN':
-            model = KNeighborsRegressor()    
+            model = KNeighborsRegressor()
+            self.model_params = {'n_neighbors':[5, 10, 15, 20, 30, 50],
+                                 'weights': ['uniform', 'distance'],
+                                 'algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute']}
+        elif estimator == 'Bagging':
+            model = BaggingRegressor(base_estimator=GradientBoostingRegressor(),
+                                     n_estimators=3,
+                                     bootstrap=True)                # default = False  (replacement)
+        elif estimator == 'Ada':
+            model = AdaBoostRegressor(base_estimator=GradientBoostingRegressor(),
+                                      n_estimators=100,
+                                      loss='linear')                            
+        elif estimator == 'Stacking':
+            estimators_temp = [('gbr', GradientBoostingRegressor()),
+                               ('rid', Ridge())] 
+            model = StackingRegressor(estimators=[est for est in estimators_temp],
+                                      final_estimator=RandomForestRegressor(n_estimators=10,
+                                                                            random_state=0))
+        elif estimator == 'Voting':
+            model = VotingRegressor([('r1', LinearRegression()),
+                                     ('r2', RandomForestRegressor(n_estimators=10, random_state=0)),
+                                     ('r3', GradientBoostingRegressor())])    
         elif estimator == 'GBM':
             model = GradientBoostingRegressor()
+            self.model_params = {'loss': ['ls', 'huber'],
+                                 'learning_rate': [1.0, 0.1, 0.05, 0.01],
+                                 'n_estimators': [100, 200, 500, 1000],
+                                 'random_state': 0}
         elif estimator == 'RandomForest':
             model = RandomForestRegressor()
-            self.model_params = {# 'n_estimators': [int(x) for x in np.linspace(start = 50, stop = 200, num = 10)],
-                'max_features': ['auto', 'sqrt'],
-                'n_estimators': range(60, 220, 20)}
-            # 'max_depth' : [int(x) for x in np.linspace(10, 110, num = 11)]}
+            self.model_params = {'n_estimators': [int(x) for x in np.linspace(start = 50, stop = 200, num = 10)],
+                                 'max_features': ['auto', 'sqrt'],
+                                 'n_estimators': range(60, 220, 10),
+                                 'max_depth' : [int(x) for x in np.linspace(10, 110, num = 11)]}
         elif estimator == 'xgboost':
-            model = XGBRegressor(objective='reg:squarederror', n_jobs=self.n_jobs, max_depth=10, learning_rate=0.05,
-                                 gamma=3)
+            model = XGBRegressor(objective='reg:squarederror', n_jobs=-1, max_depth=10,
+                                 learning_rate=0.05, gamma=3)
             self.model_params = {'max_depth': range(2, 40, 2),
                                  'n_estimators': range(60, 220, 40),
-                                 'learning_rate': [0.3, 0.1, 0.05, 0.01, 0.001],
+                                 'learning_rate': [0.5, 0.1, 0.05, 0.01, 0.001],
                                  'gamma': [1, 3, 5]}
+        # elif estimator == 'LightGBM':
+        #     model = HistGradientBoostingClassifier()
+        #     self.model_params = {'loss': ['auto', 'binary_crossentropy', 'categorical_crossentropy'],
+        #                          'learning_rate': [0.3, 0.1, 0.05, 0.01, 0.001],
+        #                          'max_iter': [100, 500, 1000],
+        #                          'random_state': 0}
         else:
             model = Lasso()
         estimator_params = self.kwargs.get('estimator_params', {})
@@ -99,14 +135,14 @@ class Trainer(object):
     def set_pipeline(self):
         """ defines the pipeline as a class attribute """
         # feature engineering pipeline blocks
-        feateng_steps = self.kwargs.get('feateng', ['runtime'])
+        feateng_steps = self.kwargs.get('feateng', ['runtime', 'country'])
         pipe_runtime_features = Pipeline([('runtime', SimpleImputer(strategy='constant', fill_value="0")),
                                          ('runtime_encoder', CleanRuntimeEncoder())])
-        # pipe_country_features = Pipeline(('country', CleanCountryEncoder()))
+        pipe_country_features = Pipeline(('country', CleanCountryEncoder()))
         # pipe_genre_features = Pipeline(('genre', CleanGenreEncoder()))
         # pipe_year_features = Pipeline(('age', XXXXXX()))
-        # pipe_rated_features = Pipeline(('rated', XXXXXX()))
-        # pipe_released_features = Pipeline(('released', XXXXXX()))
+        # pipe_rated_features = Pipeline(('rated', CleanRatedEncoder()))
+        # pipe_released_features = Pipeline(('released', CleanReleasedEncoder()))
         # pipe_writer_features = Pipeline([('writer', SimpleImputer(strategy='constant', fill_value='unknown')),
         #                         ('writer_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})) 
         #                         ('writer_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
@@ -120,8 +156,8 @@ class Trainer(object):
         
         # define default feature engineering blocks
         feateng_blocks = [
-            ('runtime', pipe_runtime_features, ['Runtime'])
-            # ('country', pipe_country_features, ['Country']), #custom USA
+            ('runtime', pipe_runtime_features, ['Runtime']),
+            ('country', pipe_country_features, ['Country']) #custom USA
             # ('genre', pipe_genre_features, ['Genre']),
             # ('age', pipe_year_features, ['Year']), # custom class scale
             # ('rated', pipe_rated_features, ['Rated']),
@@ -139,7 +175,7 @@ class Trainer(object):
             if block[0] not in feateng_steps:
                 feateng_blocks.remove(block)
 
-        features_encoder = ColumnTransformer(feateng_blocks, n_jobs=None, remainder="drop")
+        features_encoder = ColumnTransformer(feateng_blocks, n_jobs=None, remainder='drop')
 
         self.pipeline = Pipeline(steps=[
                     ('features', features_encoder),
@@ -212,15 +248,17 @@ if __name__ == "__main__":
         
     # set X and y
     y = df.avg_review_score
-    X = df[['Year','Runtime', "Rated"]]
+    X = df[['Year','Runtime', 'Rated']]
     
     # hold out
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
     
     # train model
-    estimators = ['Linear', 'Lasso']
+    estimators = ['Linear', 'Lasso', 'Ridge', 'KNN', 'Bagging',
+                  'Ada', 'Stacking', 'Voting', 'xgboost',
+                  'GBM', 'RandomForest', 'LightGBM']
     for estimator in estimators:
-        params = {'estimator': estimator, 'feateng': ['runtime']}
+        params = {'estimator': estimator, 'feateng': ['runtime', 'country']}
         trainer = Trainer(X_train, y_train, **params)
         trainer.set_experiment_name(EXPERIMENT_NAME)
         trainer.run()
