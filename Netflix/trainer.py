@@ -24,6 +24,7 @@ from Netflix.data import load_data
 from Netflix.encoders import CleanRuntimeEncoder, CleanReleasedEncoder, CleanCountryEncoder
 # from Netflix.encoders import CleanTomatoesEncoder, CleanGenreEncoder, CleanLanguageEncoder
 
+
 import mlflow
 from mlflow.tracking import MlflowClient 
 
@@ -143,6 +144,7 @@ class Trainer(object):
         # pipe_year_features = Pipeline([('age', XXXXXX())])
         # pipe_rated_features = Pipeline([('rated', CleanRatedEncoder())])
         # pipe_released_features = Pipeline(('released', CleanReleasedEncoder())])
+
         # pipe_writer_features = Pipeline([('writer', SimpleImputer(strategy='constant', fill_value='unknown')),
         #                         ('writer_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})) 
         #                         ('writer_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
