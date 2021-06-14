@@ -67,7 +67,7 @@ class CleanRuntimeEncoder(BaseEstimator, TransformerMixin):
 #         return self
 
 class CleanLanguageEncoder(BaseEstimator, TransformerMixin):
-    # class clean country encoder(CustomEncoder):
+    # class clean language encoder(CustomEncoder):
     def __init__(self):
         pass
         
@@ -91,7 +91,7 @@ class CleanCountryEncoder(BaseEstimator, TransformerMixin):
     def __init__(self):
         pass
         
-    def include_us(self, row):
+    def include_us(row):
         """ replace with other frequent values """
         x = row[0]
         usa = ["United States", "USA"]
@@ -108,7 +108,7 @@ class CleanCountryEncoder(BaseEstimator, TransformerMixin):
     def fit(self, x, y=None):
         return self
 
-# #Ignore below as already included in imputer
+# # Ignore below as already included in imputer
 # class CleanGenreEncoder(BaseEstimator, TransformerMixin):
 #     # class clean genre encoder(CustomEncoder):
 #     def __init__(self):
