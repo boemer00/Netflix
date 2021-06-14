@@ -22,7 +22,7 @@ import xgboost
 from Netflix.params import MLFLOW_URI, EXPERIMENT_NAME
 from Netflix.data import load_data
 from Netflix.encoders import CleanRuntimeEncoder, CleanReleasedEncoder, CleanCountryEncoder
-# from Netflix.encoders import CleanTomatoesEncoder, CleanGenreEncoder, CleanLanguageEncoder, CleanCountryEncoder
+# from Netflix.encoders import CleanTomatoesEncoder, CleanGenreEncoder, CleanLanguageEncoder
 
 import mlflow
 from mlflow.tracking import MlflowClient 
@@ -115,7 +115,7 @@ class Trainer(object):
         # elif estimator == 'LightGBM':
         #     model = HistGradientBoostingClassifier()
         #     self.model_params = {'loss': ['auto', 'binary_crossentropy', 'categorical_crossentropy'],
-        #                          'learning_rate': [0.3, 0.1, 0.05, 0.01, 0.001],
+        #                          'learning_rate': [0.5, 0.1, 0.05, 0.01, 0.001],
         #                          'max_iter': [100, 500, 1000],
         #                          'random_state': 0}
         else:
@@ -137,12 +137,12 @@ class Trainer(object):
         # feature engineering pipeline blocks
         feateng_steps = self.kwargs.get('feateng', ['runtime', 'country'])
         pipe_runtime_features = Pipeline([('runtime', SimpleImputer(strategy='constant', fill_value="0")),
-                                         ('runtime_encoder', CleanRuntimeEncoder())])
-        pipe_country_features = Pipeline(('country', CleanCountryEncoder()))
-        # pipe_genre_features = Pipeline(('genre', CleanGenreEncoder()))
-        # pipe_year_features = Pipeline(('age', XXXXXX()))
-        # pipe_rated_features = Pipeline(('rated', CleanRatedEncoder()))
-        # pipe_released_features = Pipeline(('released', CleanReleasedEncoder()))
+                                          ('runtime_encoder', CleanRuntimeEncoder())])
+        pipe_country_features = Pipeline([('country', CleanCountryEncoder())])
+        # pipe_genre_features = Pipeline([('genre', CleanGenreEncoder())])
+        # pipe_year_features = Pipeline([('age', XXXXXX())])
+        # pipe_rated_features = Pipeline([('rated', CleanRatedEncoder())])
+        # pipe_released_features = Pipeline(('released', CleanReleasedEncoder())])
         # pipe_writer_features = Pipeline([('writer', SimpleImputer(strategy='constant', fill_value='unknown')),
         #                         ('writer_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})) 
         #                         ('writer_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
@@ -157,7 +157,7 @@ class Trainer(object):
         # define default feature engineering blocks
         feateng_blocks = [
             ('runtime', pipe_runtime_features, ['Runtime']),
-            ('country', pipe_country_features, ['Country']) #custom USA
+            ('country', pipe_country_features, ['Country'])
             # ('genre', pipe_genre_features, ['Genre']),
             # ('age', pipe_year_features, ['Year']), # custom class scale
             # ('rated', pipe_rated_features, ['Rated']),
@@ -178,10 +178,10 @@ class Trainer(object):
         features_encoder = ColumnTransformer(feateng_blocks, n_jobs=None, remainder='drop')
 
         self.pipeline = Pipeline(steps=[
-                    ('features', features_encoder),
-                    ('rgs', self.get_estimator())])
-        
-        
+            ('features', features_encoder),
+            ('rgs', self.get_estimator())])
+
+
     def run(self):
         self.set_pipeline()
         self.mlflow_log_param('model', 'Linear')
