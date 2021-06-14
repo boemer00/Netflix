@@ -76,24 +76,24 @@ class Trainer(object):
             self.model_params = {'n_neighbors':[5, 10, 15, 20, 30, 50],
                                  'weights': ['uniform', 'distance'],
                                  'algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute']}
-        elif estimator == 'Bagging':
-            model = BaggingRegressor(base_estimator=GradientBoostingRegressor(),
-                                     n_estimators=3,
-                                     bootstrap=True)                # default = False  (replacement)
-        elif estimator == 'Ada':
-            model = AdaBoostRegressor(base_estimator=GradientBoostingRegressor(),
-                                      n_estimators=100,
-                                      loss='linear')                            
-        elif estimator == 'Stacking':
-            estimators_temp = [('gbr', GradientBoostingRegressor()),
-                               ('rid', Ridge())] 
-            model = StackingRegressor(estimators=[est for est in estimators_temp],
-                                      final_estimator=RandomForestRegressor(n_estimators=10,
-                                                                            random_state=0))
-        elif estimator == 'Voting':
-            model = VotingRegressor([('r1', LinearRegression()),
-                                     ('r2', RandomForestRegressor(n_estimators=10, random_state=0)),
-                                     ('r3', GradientBoostingRegressor())])    
+        # elif estimator == 'Bagging':
+        #     model = BaggingRegressor(base_estimator=GradientBoostingRegressor(),
+        #                              n_estimators=3,
+        #                              bootstrap=True)                # default = False  (replacement)
+        # elif estimator == 'Ada':
+        #     model = AdaBoostRegressor(base_estimator=GradientBoostingRegressor(),
+        #                               n_estimators=100,
+        #                               loss='linear')                            
+        # elif estimator == 'Stacking':
+        #     estimators_temp = [('gbr', GradientBoostingRegressor()),
+        #                        ('rid', Ridge())] 
+        #     model = StackingRegressor(estimators=[est for est in estimators_temp],
+        #                               final_estimator=RandomForestRegressor(n_estimators=10,
+        #                                                                     random_state=0))
+        # elif estimator == 'Voting':
+        #     model = VotingRegressor([('r1', LinearRegression()),
+        #                              ('r2', RandomForestRegressor(n_estimators=10, random_state=0)),
+        #                              ('r3', GradientBoostingRegressor())])    
         elif estimator == 'GBM':
             model = GradientBoostingRegressor()
             self.model_params = {'loss': ['ls', 'huber'],
@@ -139,7 +139,8 @@ class Trainer(object):
         feateng_steps = self.kwargs.get('feateng', ['runtime', 'country'])
         pipe_runtime_features = Pipeline([('runtime', SimpleImputer(strategy='constant', fill_value="0")),
                                           ('runtime_encoder', CleanRuntimeEncoder())])
-        pipe_country_features = Pipeline([('country', CleanCountryEncoder())])
+        pipe_country_features = Pipeline([('country', SimpleImputer(strategy='constant', fill_value="unknown")),
+                                          ('country_encoder', CleanCountryEncoder())])
         # pipe_genre_features = Pipeline([('genre', CleanGenreEncoder())])
         # pipe_year_features = Pipeline([('age', XXXXXX())])
         # pipe_rated_features = Pipeline([('rated', CleanRatedEncoder())])
@@ -250,15 +251,14 @@ if __name__ == "__main__":
         
     # set X and y
     y = df.avg_review_score
-    X = df[['Year','Runtime', 'Rated']]
+    X = df[['Year','Runtime', 'Rated', 'Country']]
     
     # hold out
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
     
     # train model
-    estimators = ['Linear', 'Lasso', 'Ridge', 'KNN', 'Bagging',
-                  'Ada', 'Stacking', 'Voting', 'xgboost',
-                  'GBM', 'RandomForest', 'LightGBM']
+    estimators = ['Linear', 'Lasso', 'Ridge', 'KNN',
+                   'xgboost', 'GBM', 'RandomForest'] # 'Ada', 'Stacking', 'Voting', 'Bagging', 'LightGBM'
     for estimator in estimators:
         params = {'estimator': estimator, 'feateng': ['runtime', 'country']}
         trainer = Trainer(X_train, y_train, **params)
