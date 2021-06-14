@@ -49,7 +49,7 @@ def predict(year,                   # 1994
         Released=[released],
         Writer=[writer],
         Director=[director],
-        Actors=[actors],))
+        Actors=[actors]))
 
     # get model from GCP
 
