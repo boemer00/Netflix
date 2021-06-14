@@ -91,7 +91,7 @@ class CleanCountryEncoder(BaseEstimator, TransformerMixin):
     def __init__(self):
         pass
         
-    def include_us(row):
+    def include_us(self, row):
         """ replace with other frequent values """
         x = row[0]
         usa = ["United States", "USA"]
@@ -102,7 +102,6 @@ class CleanCountryEncoder(BaseEstimator, TransformerMixin):
             
     def transform(self, x, y=None):
         final = np.array([self.include_us(row) for row in x])
-        print(final)
         return final
         
     def fit(self, x, y=None):
