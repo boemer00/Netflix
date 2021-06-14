@@ -257,18 +257,18 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
     
     # train model
-    estimators = ['Linear', 'Lasso', 'Ridge', 'KNN',
-                   'xgboost', 'GBM', 'RandomForest'] # 'Ada', 'Stacking', 'Voting', 'Bagging', 'LightGBM'
-    for estimator in estimators:
-        params = {'estimator': estimator, 'feateng': ['runtime', 'country']}
-        trainer = Trainer(X_train, y_train, **params)
-        trainer.set_experiment_name(EXPERIMENT_NAME)
-        trainer.run()
+    # estimators = ['Linear', 'Lasso', 'Ridge', 'KNN',
+    #                'xgboost', 'GBM', 'RandomForest'] # 'Ada', 'Stacking', 'Voting', 'Bagging', 'LightGBM'
+    # for estimator in estimators:
+    #     params = {'estimator': estimator, 'feateng': ['runtime', 'country']}
+    #     trainer = Trainer(X_train, y_train, **params)
+    #     trainer.set_experiment_name(EXPERIMENT_NAME)
+    #     trainer.run()
     
-        # evaluate the pipeline
-        rmse = trainer.evaluate(X_test, y_test)
-        print(f"rmse: {rmse}")
+    #     # evaluate the pipeline
+    #     rmse = trainer.evaluate(X_test, y_test)
+    #     print(f"rmse: {rmse}")
         
-        # save model locally
-        trainer.save_model()
-    
+    #     # save model locally
+    #     trainer.save_model()
+    print(X.dtypes)
