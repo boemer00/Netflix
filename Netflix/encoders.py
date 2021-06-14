@@ -80,7 +80,6 @@ class CleanLanguageEncoder(BaseEstimator, TransformerMixin):
             
     def transform(self, x, y=None):
         final = np.array([self.include_english(row) for row in x])
-        print(final)
         return final
         
     def fit(self, x, y=None):
@@ -145,7 +144,7 @@ class CleanCountryEncoder(BaseEstimator, TransformerMixin):
 #         return self
 
 class CleanReleasedEncoder(BaseEstimator, TransformerMixin):
-    # class clean plot encoder(CustomEncoder):
+    # class clean released encoder(CustomEncoder):
     def __init__(self):
         pass
             
@@ -157,7 +156,7 @@ class CleanReleasedEncoder(BaseEstimator, TransformerMixin):
         return self
 
 class CleanRatedEncoder(BaseEstimator, TransformerMixin):
-    # class clean plot encoder(CustomEncoder):
+    # class clean rated encoder(CustomEncoder):
     def __init__(self):
         pass
         
@@ -187,7 +186,12 @@ class CleanRatedEncoder(BaseEstimator, TransformerMixin):
         return self
 
 ##to do class CleanAgeEncoder
-
+class CleanAgeEncoder(BaseEstimator, TransformerMixin):
+    # class clean age encoder(CustomEncoder):
+    def diff_dates(df):
+        d1 = datetime.now()
+        d2 = pd.to_datetime(df.year, format='%Y')
+        return round(abs(d2-d1).dt.days/365) 
 
 ## -----------------------------
 ## -----------------------------
