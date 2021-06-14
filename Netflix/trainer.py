@@ -8,8 +8,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.neighbors import KNeighborsRegressor
-# from sklearn.experimental import enable_hist_gradient_boosting
-# from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor, BaggingRegressor
 from sklearn.ensemble import StackingRegressor, VotingRegressor, AdaBoostRegressor
 from sklearn.linear_model import Lasso, Ridge, LinearRegression
@@ -21,8 +19,8 @@ import xgboost
 
 from Netflix.params import MLFLOW_URI, EXPERIMENT_NAME
 from Netflix.data import load_data
-from Netflix.encoders import CleanRuntimeEncoder, CleanReleasedEncoder, CleanCountryEncoder
-# from Netflix.encoders import CleanTomatoesEncoder, CleanGenreEncoder, CleanLanguageEncoder
+from Netflix.encoders import CleanRuntimeEncoder, CleanLanguageEncoder, CleanCountryEncoder, CleanReleasedEncoder
+from Netflix.encoders import CleanRatedEncoder 
 
 
 import mlflow
@@ -136,40 +134,63 @@ class Trainer(object):
     def set_pipeline(self):
         """ defines the pipeline as a class attribute """
         # feature engineering pipeline blocks
-        feateng_steps = self.kwargs.get('feateng', ['runtime', 'country'])
-        pipe_runtime_features = Pipeline([('runtime', SimpleImputer(strategy='constant', fill_value="0")),
-                                          ('runtime_encoder', CleanRuntimeEncoder())])
-        pipe_country_features = Pipeline([('country', SimpleImputer(strategy='constant', fill_value="unknown")),
-                                          ('country_encoder', CleanCountryEncoder())])
-        # pipe_genre_features = Pipeline([('genre', CleanGenreEncoder())])
+        feateng_steps = self.kwargs.get('feateng', ['runtime', 'country', 'language'])
+        
+        pipe_runtime_features = Pipeline([
+            ('runtime', SimpleImputer(strategy='constant', fill_value="0")),
+            ('runtime_encoder', CleanRuntimeEncoder()),
+            ('runtime_scaler', StandardScaler())])
+        
+        pipe_country_features = Pipeline([
+            ('country', SimpleImputer(strategy='constant', fill_value='unknown')),
+            ('country_encoder', CleanCountryEncoder())])
+        
+        pipe_language_features = Pipeline([
+            ('language', SimpleImputer(strategy='constant', fill_value='unknown')),
+            ('language_encoder', CleanLanguageEncoder())])
+        
+        # pipe_genre_features = Pipeline([('genre_encoder', CleanGenreEncoder())])
         # pipe_year_features = Pipeline([('age', XXXXXX())])
-        # pipe_rated_features = Pipeline([('rated', CleanRatedEncoder())])
-        # pipe_released_features = Pipeline(('released', CleanReleasedEncoder())])
+        
+        pipe_rated_features = Pipeline([
+            ('rated', SimpleImputer(strategy='constant', fill_value='unknown')),
+            ('rated_encoder', CleanRatedEncoder()),
+            ('rated_ohe', OneHotEncoder(handle_unknown='ignore'))])
+        
+        pipe_released_features = Pipeline([
+            ('released', SimpleImputer(strategy='constant', fill_value='unknown')),
+            ('released_encoder', CleanReleasedEncoder()),
+            ('released_ohe', OneHotEncoder(handle_unknown='ignore'))])
 
-        # pipe_writer_features = Pipeline([('writer', SimpleImputer(strategy='constant', fill_value='unknown')),
-        #                         ('writer_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})) 
-        #                         ('writer_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
-        # pipe_director_features = Pipeline([('director', SimpleImputer(strategy='constant', fill_value='unknown')),
-        #                         ('director_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})) 
-        #                         ('director_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
-        # pipe_actors_features = Pipeline([('actors', SimpleImputer(strategy='constant', fill_value='unknown')),
-        #                         ('actors_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})) 
-        #                         ('actors_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
+        pipe_writer_features = Pipeline([
+            ('writer', SimpleImputer(strategy='constant', fill_value='unknown')),
+            ('writer_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})), 
+            ('writer_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
+        
+        pipe_director_features = Pipeline([
+            ('director', SimpleImputer(strategy='constant', fill_value='unknown')),
+            ('director_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})), 
+            ('director_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
+        
+        pipe_actors_features = Pipeline([
+            ('actors', SimpleImputer(strategy='constant', fill_value='unknown')),
+            ('actors_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})), 
+            ('actors_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
         
         
         # define default feature engineering blocks
         feateng_blocks = [
             ('runtime', pipe_runtime_features, ['Runtime']),
-            ('country', pipe_country_features, ['Country'])
+            ('country', pipe_country_features, ['Country']),
             # ('genre', pipe_genre_features, ['Genre']),
             # ('age', pipe_year_features, ['Year']), # custom class scale
-            # ('rated', pipe_rated_features, ['Rated']),
-            # ('released', pipe_released_features, ['Released']), # custom month back
-            # ('writer', pipe_writer_features, ['Writer']),
-            # ('director', pipe_director_features, ['Director']),
-            # ('actors', pipe_actors_features, ['Actors']),
+            ('rated', pipe_rated_features, ['Rated']),
+            ('released', pipe_released_features, ['Released']), # custom month back
+            ('writer', pipe_writer_features, ['Writer']),
+            ('director', pipe_director_features, ['Director']),
+            ('actors', pipe_actors_features, ['Actors']),
             # ('plot', pipe_plot_features, ['Plot']), # custom /vectorizer
-            # ('language', pipe_language_features, ['Language']), # custom binary
+            ('language', pipe_language_features, ['Language']) # custom binary
             # ('production', pipe_production_features, ['Production']), # CountVectorizer
         ]
         
@@ -184,6 +205,8 @@ class Trainer(object):
             ('features', features_encoder),
             ('rgs', self.get_estimator())])
 
+
+    ## grid search
 
     def run(self):
         self.set_pipeline()
@@ -251,24 +274,26 @@ if __name__ == "__main__":
         
     # set X and y
     y = df.avg_review_score
-    X = df[['Year','Runtime', 'Rated', 'Country']]
+    X = df[['Year','Runtime', 'Rated', 'Country', 'Language',
+            'Released', 'Writer', 'Director', 'Actors']]
     
     # hold out
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
     
     # train model
-    # estimators = ['Linear', 'Lasso', 'Ridge', 'KNN',
-    #                'xgboost', 'GBM', 'RandomForest'] # 'Ada', 'Stacking', 'Voting', 'Bagging', 'LightGBM'
-    # for estimator in estimators:
-    #     params = {'estimator': estimator, 'feateng': ['runtime', 'country']}
-    #     trainer = Trainer(X_train, y_train, **params)
-    #     trainer.set_experiment_name(EXPERIMENT_NAME)
-    #     trainer.run()
+    estimators = ['Linear', 'Lasso', 'Ridge', 'KNN',
+                   'xgboost', 'GBM', 'RandomForest'] # 'Ada', 'Stacking', 'Voting', 'Bagging', 'LightGBM'
+    for estimator in estimators:
+        params = {'estimator': estimator, 'feateng': ['runtime', 'country', 'language', 'released',
+                                                      'rated', 'writer', 'director', 'actors']}
+        trainer = Trainer(X_train, y_train, **params)
+        trainer.set_experiment_name(EXPERIMENT_NAME)
+        trainer.run()
     
-    #     # evaluate the pipeline
-    #     rmse = trainer.evaluate(X_test, y_test)
-    #     print(f"rmse: {rmse}")
+        # evaluate the pipeline
+        rmse = trainer.evaluate(X_test, y_test)
+        print(f"rmse: {rmse}")
         
-    #     # save model locally
-    #     trainer.save_model()
-    print(X.dtypes)
+        # save model locally
+        trainer.save_model()
+        

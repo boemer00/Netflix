@@ -28,10 +28,15 @@ def index():
 
 
 @app.get("/predict")
-def predict(year,                   # 2000
-            runtime,                # 90 min
-            rated,                  # R, PG-13
-            country):               # USA
+def predict(year,                   # 1994
+            runtime,                # 101 min
+            rated,                  # PG-13
+            country,                # USA
+            language,               # English
+            released,               # Jul
+            writer,                 # Mike Werb
+            director,               # Chuck Russel
+            actors):                # Jim Carrey
 
 
     # build X ⚠️ beware to the order of the parameters ⚠️
@@ -39,9 +44,14 @@ def predict(year,                   # 2000
         Year=[int(year)],
         Runtime=[runtime],
         Rated=[rated],
-        Country=[country]))
+        Country=[country],
+        Language=[language],
+        Released=[released],
+        Writer=[writer],
+        Director=[director],
+        Actors=[actors],))
 
-    # ⚠️ TODO: get model from GCP
+    # get model from GCP
 
     # pipeline = get_model_from_gcp()
     pipeline = joblib.load('model.joblib')
@@ -56,4 +66,5 @@ def predict(year,                   # 2000
 # $DELETE_END
 
 if __name__ == "__main__":
-    print(predict(2000, '90', 'R', 'USA'))
+    print(predict(2000, '90', 'R', 'USA', 'English'
+                  'Jul', 'Mike Werb', 'Chuck Russel', 'Jim Carrey'))
