@@ -3,6 +3,7 @@ import re
 from typing import final
 import pandas as pd
 import numpy as np
+from datetime import datetime, timedelta
 from sklearn.base import BaseEstimator, TransformerMixin
 
 def load_data(n):
@@ -106,14 +107,13 @@ class CleanCountryEncoder(BaseEstimator, TransformerMixin):
     def fit(self, x, y=None):
         return self
 
-# # Ignore below as already included in imputer
 # class CleanGenreEncoder(BaseEstimator, TransformerMixin):
-#     # class clean genre encoder(CustomEncoder):
+#     """ class clean genre encoder """
 #     def __init__(self):
 #         pass
         
 #     def clean_genre(self, row):
-#         """ replace with other frequent values """
+#         # replace with other frequent values
 #         x = row[0]
 #         freq_genre = x.mode()[0]
 #         x = x.replace(np.nan, freq_genre)  
@@ -144,7 +144,7 @@ class CleanCountryEncoder(BaseEstimator, TransformerMixin):
 #         return self
 
 class CleanReleasedEncoder(BaseEstimator, TransformerMixin):
-    # class clean released encoder(CustomEncoder):
+    """ class clean released encoder """
     def __init__(self):
         pass
             
@@ -156,12 +156,12 @@ class CleanReleasedEncoder(BaseEstimator, TransformerMixin):
         return self
 
 class CleanRatedEncoder(BaseEstimator, TransformerMixin):
-    # class clean rated encoder(CustomEncoder):
+    """ class clean rated encoder """
     def __init__(self):
         pass
         
     def clean_rated(self, row):
-        """ Group different Rated labels """
+        # Group different Rated labels
         x = row[0]
         # group ratings 
         kids = ['TV-G', 'TV-PG', 'Kid', 'TV-Y7', 'TV-Y7-FV', 'TV-Y', 'E']
@@ -185,13 +185,23 @@ class CleanRatedEncoder(BaseEstimator, TransformerMixin):
     def fit(self, x, y=None):
         return self
 
-##to do class CleanAgeEncoder
 class CleanAgeEncoder(BaseEstimator, TransformerMixin):
-    # class clean age encoder(CustomEncoder):
-    def diff_dates(df):
+    """ class clean age encoder """
+    def __init__(self):
+        pass
+    
+    def diff_dates(self, row):
+        x = row[0]
         d1 = datetime.now()
-        d2 = pd.to_datetime(df.year, format='%Y')
-        return round(abs(d2-d1).dt.days/365) 
+        d2 = pd.to_datetime(x, format='%Y')
+        return [round(abs(d2 - d1) / np.timedelta64(1, 'Y'))]
+    
+    def transform(self, x, y=None):
+        final = np.array([self.diff_dates(row) for row in x])
+        return final
+    
+    def fit(self, x, y=None):
+        return self
 
 ## -----------------------------
 ## -----------------------------
@@ -293,7 +303,6 @@ class CleanAgeEncoder(BaseEstimator, TransformerMixin):
 if __name__ == "__main__":
     from sklearn.pipeline import Pipeline
     from sklearn.compose import ColumnTransformer
-    from sklearn.linear_model import LinearRegression
     from sklearn.impute import SimpleImputer
     df = load_data(5)
     test_pipe = Pipeline([
