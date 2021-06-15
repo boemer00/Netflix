@@ -54,8 +54,8 @@ def predict(year,                   # 1994
         Released=[released],
         Writer=[writer],
         Director=[director],
-        Actors=[actors],
-        Production=[production]))
+        Production=[production],
+        Actors=[actors]))
 
     # get model from GCP
 
