@@ -286,7 +286,7 @@ if __name__ == "__main__":
         
     # set X and y
     y = df.avg_review_score
-    X = df[['Year','Runtime', 'Rated', 'Country', 'Genre', 'Year', 'Language',
+    X = df[['Year','Runtime', 'Rated', 'Country', 'Genre', 'Language',
             'Released', 'Writer', 'Director', 'Actors', 'Production']]
     
     # hold out

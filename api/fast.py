@@ -42,6 +42,7 @@ def predict(year,                   # 1994
             production):            # Warner Bros
 
 
+
     # build X ⚠️ beware to the order of the parameters ⚠️
     X = pd.DataFrame(dict(
         Year=[int(year)],
@@ -49,13 +50,12 @@ def predict(year,                   # 1994
         Rated=[rated],
         Country=[country],
         Genre=[genre],
-        Age=[age],
         Language=[language],
         Released=[released],
         Writer=[writer],
         Director=[director],
-        Production=[production],
-        Actors=[actors]))
+        Actors=[actors],
+        Production=[production]))
 
     # get model from GCP
 
