@@ -19,8 +19,8 @@ import xgboost
 
 from Netflix.params import MLFLOW_URI, EXPERIMENT_NAME
 from Netflix.data import load_data
-from Netflix.encoders import CleanRuntimeEncoder, CleanLanguageEncoder, CleanCountryEncoder, CleanReleasedEncoder
-from Netflix.encoders import CleanRatedEncoder 
+from Netflix.encoders import CleanRuntimeEncoder, CleanLanguageEncoder, CleanCountryEncoder,\
+                             CleanReleasedEncoder, CleanRatedEncoder, CleanAgeEncoder
 
 
 import mlflow
@@ -149,8 +149,14 @@ class Trainer(object):
             ('language', SimpleImputer(strategy='constant', fill_value='unknown')),
             ('language_encoder', CleanLanguageEncoder())])
         
-        # pipe_genre_features = Pipeline([('genre_encoder', CleanGenreEncoder())])
-        # pipe_year_features = Pipeline([('age', XXXXXX())])
+        pipe_genre_features = Pipeline([
+            ('genre', SimpleImputer(strategy='constant', fill_value='unknown')),
+            ('genre_transformer', FunctionTransformer(np.reshape, kw_args={'newshape':-1})), 
+            ('genre_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
+        
+        pipe_age_features = Pipeline([
+            ('age', SimpleImputer(strategy='median')),
+            ('age_enconder', CleanAgeEncoder())])
         
         pipe_rated_features = Pipeline([
             ('rated', SimpleImputer(strategy='constant', fill_value='unknown')),
@@ -177,21 +183,25 @@ class Trainer(object):
             ('actors_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})), 
             ('actors_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
         
+        pipe_production_features = Pipeline([
+            ('production', SimpleImputer(strategy='constant', fill_value='unknown')),
+            ('production_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})), 
+            ('production_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
+        
         
         # define default feature engineering blocks
         feateng_blocks = [
             ('runtime', pipe_runtime_features, ['Runtime']),
             ('country', pipe_country_features, ['Country']),
-            # ('genre', pipe_genre_features, ['Genre']),
-            # ('age', pipe_year_features, ['Year']), # custom class scale
+            ('genre', pipe_genre_features, ['Genre']),
+            ('age', pipe_age_features, ['Year']),
             ('rated', pipe_rated_features, ['Rated']),
-            ('released', pipe_released_features, ['Released']), # custom month back
+            ('released', pipe_released_features, ['Released']),
             ('writer', pipe_writer_features, ['Writer']),
             ('director', pipe_director_features, ['Director']),
             ('actors', pipe_actors_features, ['Actors']),
-            # ('plot', pipe_plot_features, ['Plot']), # custom /vectorizer
-            ('language', pipe_language_features, ['Language']) # custom binary
-            # ('production', pipe_production_features, ['Production']), # CountVectorizer
+            ('language', pipe_language_features, ['Language']),
+            ('production', pipe_production_features, ['Production'])
         ]
         
         # filter out some blocks according to input parameters
@@ -274,8 +284,8 @@ if __name__ == "__main__":
         
     # set X and y
     y = df.avg_review_score
-    X = df[['Year','Runtime', 'Rated', 'Country', 'Language',
-            'Released', 'Writer', 'Director', 'Actors']]
+    X = df[['Year','Runtime', 'Rated', 'Country', 'Genre', 'Year', 'Language',
+            'Released', 'Writer', 'Director', 'Actors', 'Production']]
     
     # hold out
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
@@ -284,8 +294,8 @@ if __name__ == "__main__":
     estimators = ['Linear', 'Lasso', 'Ridge', 'KNN',
                    'xgboost', 'GBM', 'RandomForest'] # 'Ada', 'Stacking', 'Voting', 'Bagging', 'LightGBM'
     for estimator in estimators:
-        params = {'estimator': estimator, 'feateng': ['runtime', 'country', 'language', 'released',
-                                                      'rated', 'writer', 'director', 'actors']}
+        params = {'estimator': estimator, 'feateng': ['runtime', 'country', 'genre', 'age', 'language', 'released',
+                                                      'rated', 'writer', 'director', 'actors', 'production']}
         trainer = Trainer(X_train, y_train, **params)
         trainer.set_experiment_name(EXPERIMENT_NAME)
         trainer.run()
