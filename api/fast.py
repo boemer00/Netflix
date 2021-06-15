@@ -24,7 +24,7 @@ app.add_middleware(
 
 @app.get("/")
 def index():
-    return dict(movie_quote="Look mom, I'm roadkill. Ha Ha! -- The Mask (1994)")
+    return dict(movie_quote="Sssssmokin! -- The Mask (1994)")
 
 
 @app.get("/predict")
@@ -32,11 +32,14 @@ def predict(year,                   # 1994
             runtime,                # 101 min
             rated,                  # PG-13
             country,                # USA
+            genre,                  # Comedy
+            age,                    # 27
             language,               # English
             released,               # Jul
             writer,                 # Mike Werb
             director,               # Chuck Russel
-            actors):                # Jim Carrey
+            actors,                 # Jim Carrey
+            production):            # Warner Bros
 
 
     # build X ⚠️ beware to the order of the parameters ⚠️
@@ -45,11 +48,14 @@ def predict(year,                   # 1994
         Runtime=[runtime],
         Rated=[rated],
         Country=[country],
+        Genre=[genre],
+        Age=[age],
         Language=[language],
         Released=[released],
         Writer=[writer],
         Director=[director],
-        Actors=[actors],))
+        Actors=[actors],
+        Production=[production]))
 
     # get model from GCP
 
@@ -66,5 +72,5 @@ def predict(year,                   # 1994
 # $DELETE_END
 
 if __name__ == "__main__":
-    print(predict(2000, '90', 'R', 'USA', 'English'
-                  'Jul', 'Mike Werb', 'Chuck Russel', 'Jim Carrey'))
+    print(predict(2000, '90', 'PG-13', 'USA', 'Comedy', 27, 'English'
+                  'Jul', 'Mike Werb', 'Chuck Russel', 'Jim Carrey', 'Warner'))
