@@ -15,14 +15,11 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, FunctionTransformer
 from sklearn.model_selection import train_test_split
-import xgboost
 
 from Netflix.params import MLFLOW_URI, EXPERIMENT_NAME
 from Netflix.data import load_data
 from Netflix.encoders import CleanRuntimeEncoder, CleanLanguageEncoder, CleanCountryEncoder,\
                              CleanReleasedEncoder, CleanRatedEncoder, CleanAgeEncoder
-
-
 import mlflow
 from mlflow.tracking import MlflowClient 
 
@@ -47,6 +44,7 @@ class Trainer(object):
         self.kwargs = kwargs
         self.X = X
         self.y = y
+        
         # for MLFlow
         self.experiment_name = EXPERIMENT_NAME
         
@@ -96,14 +94,16 @@ class Trainer(object):
             model = GradientBoostingRegressor()
             self.model_params = {'loss': ['ls', 'huber'],
                                  'learning_rate': [1.0, 0.1, 0.05, 0.01],
-                                 'n_estimators': [100, 200, 500, 1000],
-                                 'random_state': 0}
+                                 'max_features': [5, 7, 9, 10, 12],
+                                 'n_estimators': [100, 300, 500, 1000],
+                                 'random_state': 0,
+                                 'max_depth' : [int(x) for x in np.linspace(2, 8, num=4)]}
         elif estimator == 'RandomForest':
             model = RandomForestRegressor()
             self.model_params = {'n_estimators': [int(x) for x in np.linspace(start = 50, stop = 200, num = 10)],
-                                 'max_features': ['auto', 'sqrt'],
-                                 'n_estimators': range(60, 220, 10),
-                                 'max_depth' : [int(x) for x in np.linspace(10, 110, num = 11)]}
+                                 'max_features': [5, 7, 9, 10, 12],
+                                 'n_jobs': -1,
+                                 'max_depth' : [int(x) for x in np.linspace(2, 8, num=4)]}
         elif estimator == 'xgboost':
             model = XGBRegressor(objective='reg:squarederror', n_jobs=-1, max_depth=10,
                                  learning_rate=0.05, gamma=3)
@@ -134,7 +134,9 @@ class Trainer(object):
     def set_pipeline(self):
         """ defines the pipeline as a class attribute """
         # feature engineering pipeline blocks
-        feateng_steps = self.kwargs.get('feateng', ['runtime', 'country', 'language'])
+        feateng_steps = self.kwargs.get('feateng', ['runtime', 'country', 'language',
+                                                    'genre', 'age', 'rated', 'released',
+                                                    'writer', 'director', 'actors', 'production'])
         
         pipe_runtime_features = Pipeline([
             ('runtime', SimpleImputer(strategy='constant', fill_value="0")),
@@ -294,8 +296,12 @@ if __name__ == "__main__":
     estimators = ['Linear', 'Lasso', 'Ridge', 'KNN',
                    'xgboost', 'GBM', 'RandomForest'] # 'Ada', 'Stacking', 'Voting', 'Bagging', 'LightGBM'
     for estimator in estimators:
-        params = {'estimator': estimator, 'feateng': ['runtime', 'country', 'genre', 'age', 'language', 'released',
-                                                      'rated', 'writer', 'director', 'actors', 'production']}
+        params = {'estimator': estimator,
+                  'feateng': ['runtime', 'country', 'genre',
+                              'age', 'language', 'released',
+                              'rated', 'writer', 'director',
+                              'actors', 'production']}
+        
         trainer = Trainer(X_train, y_train, **params)
         trainer.set_experiment_name(EXPERIMENT_NAME)
         trainer.run()
