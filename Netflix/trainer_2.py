@@ -92,12 +92,15 @@ class Trainer(object):
         #                              ('r3', GradientBoostingRegressor())])    
         elif estimator == 'GBM':
             model = GradientBoostingRegressor()
-            self.model_params = {'rgs__loss': ['ls', 'huber'],
-                                 'rgs__learning_rate': [0.1, 0.05, 0.01], #1
-                                 'rgs__max_features': [5, 7, 9, 10, 12],
-                                 'rgs__n_estimators': [100, 200], #300, 500, 1000],
+            self.model_params = {'rgs__loss': ['huber'], #'ls',
+                                 'rgs__learning_rate': [0.07, 0.05, 0.03], #1
+                                 # 'rgs__learning_rate': [0.1, 0.05, 0.01], #1
+                                 'rgs__max_features': [11, 12, 13, 14],
+                                 #'rgs__max_features': [5, 7, 9, 10, 12],
+                                 'rgs__n_estimators': [80, 100, 120],
+                                 #'rgs__n_estimators': [100, 200], #300, 500, 1000],
                                 #  'rgs__random_state': 0,
-                                 'rgs__max_depth' : [int(x) for x in np.linspace(2, 8, num=4)]}
+                                 'rgs__max_depth' : [7, 8, 9 ]} #[int(x) for x in np.linspace(2, 8, num=4)]}
         elif estimator == 'RandomForest':
             model = RandomForestRegressor()
             self.model_params = {'rgs__n_estimators': [int(x) for x in np.linspace(start = 50, stop = 200, num = 5)], #10
@@ -107,10 +110,28 @@ class Trainer(object):
         elif estimator == 'xgboost':
             model = XGBRegressor(objective='reg:squarederror', n_jobs=-1, max_depth=10,
                                  learning_rate=0.05, gamma=3)
-            self.model_params = {'rgs__max_depth': range(2, 40, 2),
-                                 'rgs__n_estimators': range(60, 180, 40),
-                                 'rgs__learning_rate': [0.5, 0.1, 0.01], #, 0.05, 0.01], #, 0.001],
-                                 'rgs__gamma': [1, 3, 5]}
+            self.model_params = {'rgs__max_depth': range(24, 29, 1),
+                                 #'rgs__max_depth': range(2, 40, 2),
+                                 'rgs__n_estimators': range(120, 160, 5),
+                                 #'rgs__n_estimators': range(60, 180, 40),
+                                 'rgs__learning_rate': [0.05, 0.1, 0.3],
+                                 #'rgs__learning_rate': [0.5, 0.1, 0.01], #, 0.05, 0.01], #, 0.001],
+                                 'rgs__gamma': [0, 1]}
+                                 #'rgs__gamma': [1, 3, 5]}
+                                 #subsample: 0.8
+                                # colsample_bytree: 1
+       
+                #    model = XGBClassifier(silent=False, 
+                #                   scale_pos_weight=1,
+                #                   learning_rate=0.01,  
+                #                   colsample_bytree = 0.4,
+                #                   subsample = 0.8,
+                #                   objective='binary:logistic', 
+                #                   n_estimators=1000, 
+                #                   reg_alpha = 0.3,
+                #                   max_depth=4, 
+                #                   gamma=10)
+       
         # elif estimator == 'LightGBM':
         #     model = HistGradientBoostingClassifier()
         #     self.model_params = {'loss': ['auto', 'binary_crossentropy', 'categorical_crossentropy'],
@@ -308,7 +329,7 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
     
     # train model
-    estimators = ['Linear', 'Lasso', 'Ridge', 'KNN', 'GBM', 'RandomForest', 'xgboost']
+    estimators = ['GBM', 'xgboost'] # 'Linear', 'Lasso', 'Ridge', 'KNN', 'GBM', 'RandomForest', 'xgboost']
     # 'Ada', 'Stacking', 'Voting', 'Bagging', 'LightGBM'
     
     best_results = {}
@@ -332,4 +353,4 @@ if __name__ == "__main__":
         trainer.save_model()
         
     print(best_results)
-    np.save('best_results.npy', best_results) 
+    np.save('best_results_xgboost&GBM.npy', best_results) 
