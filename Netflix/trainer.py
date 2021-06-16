@@ -57,40 +57,77 @@ class Trainer(object):
                                  'fit_intercept': [True, False],
                                  'max_iter':[1000, 2000, 5000, 10000],
                                  'random_state': 0}
+        
         elif estimator == 'Ridge':
             model = Ridge()
             self.model_params = {'alpha': [0, 0.2, 0.4, 0.6, 0.8],  # (alpha = 1) == Linear Regression
                                  'normalize':[True, False],
                                  'solver':['svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'],
                                  'random_state': 0} 
+        
         elif estimator == 'Linear':
             model = LinearRegression()
             self.model_params = {'fit_intercept': [True, False],
                                  'normalize': [True, False]}
+        
         elif estimator == 'KNN':
             model = KNeighborsRegressor()
             self.model_params = {'n_neighbors':[5, 10, 15, 20, 30, 50],
                                  'weights': ['uniform', 'distance'],
                                  'algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute']}
-        # elif estimator == 'Bagging':
-        #     model = BaggingRegressor(base_estimator=GradientBoostingRegressor(),
-        #                              n_estimators=3,
-        #                              bootstrap=True)                # default = False  (replacement)
-        # elif estimator == 'Ada':
-        #     model = AdaBoostRegressor(base_estimator=GradientBoostingRegressor(),
-        #                               n_estimators=100,
-        #                               loss='linear')                            
-        # elif estimator == 'Stacking':
-        #     estimators_temp = [('gbr', GradientBoostingRegressor()),
-        #                        ('rid', Ridge())] 
-        #     model = StackingRegressor(estimators=[est for est in estimators_temp],
-        #                               final_estimator=RandomForestRegressor(n_estimators=10,
-        #                                                                     random_state=0))
-        # elif estimator == 'Voting':
-        #     model = VotingRegressor([('r1', LinearRegression()),
-        #                              ('r2', RandomForestRegressor(n_estimators=10, random_state=0)),
-        #                              ('r3', GradientBoostingRegressor())])    
-        elif estimator == 'GBM':
+        
+        elif estimator == 'Bagging':
+            model = BaggingRegressor(
+                base_estimator=GradientBoostingRegressor(
+                    loss='huber',
+                    learning_rate=0.05,
+                    max_features=14,
+                    n_estimators=120,
+                    max_depth=7),
+                n_estimators=3,
+                bootstrap=True)
+        
+        elif estimator == 'Ada':
+            model = AdaBoostRegressor(
+                base_estimator=GradientBoostingRegressor(
+                    loss='huber',
+                    learning_rate=0.05,
+                    max_features=14,
+                    n_estimators=120,
+                    max_depth=7),
+                n_estimators=100, 
+                loss='linear')                       
+        
+        elif estimator == 'Stacking':
+            temp_=[('gbr', GradientBoostingRegressor(
+                    loss='huber',
+                    learning_rate=0.05,
+                    max_features=14,
+                    n_estimators=120,
+                    max_depth=7))]  
+            model = StackingRegressor(
+                estimators=temp_,
+                final_estimator=XGBRegressor(
+                    max_depth=26,
+                    n_estimators=155,
+                    learning_rate=0.05,
+                    gamma=1))
+        
+        elif estimator == 'Voting':
+            model = VotingRegressor([
+                ('gbr', GradientBoostingRegressor(
+                    loss='huber',
+                    learning_rate=0.05,
+                    max_features=14,
+                    n_estimators=120,
+                    max_depth=7)),
+                ('xgb', XGBRegressor(
+                    max_depth=26,
+                    n_estimators=155,
+                    learning_rate=0.05,
+                    gamma=1))])    
+        
+        elif estimator == 'GBR':
             model = GradientBoostingRegressor()
             self.model_params = {'loss': ['ls', 'huber'],
                                  'learning_rate': [1.0, 0.1, 0.05, 0.01],
@@ -98,12 +135,14 @@ class Trainer(object):
                                  'n_estimators': [100, 300, 500, 1000],
                                  'random_state': 0,
                                  'max_depth' : [int(x) for x in np.linspace(2, 8, num=4)]}
+        
         elif estimator == 'RandomForest':
             model = RandomForestRegressor()
             self.model_params = {'n_estimators': [int(x) for x in np.linspace(start = 50, stop = 200, num = 10)],
                                  'max_features': [5, 7, 9, 10, 12],
                                  'n_jobs': -1,
                                  'max_depth' : [int(x) for x in np.linspace(2, 8, num=4)]}
+        
         elif estimator == 'xgboost':
             model = XGBRegressor(objective='reg:squarederror', n_jobs=-1, max_depth=10,
                                  learning_rate=0.05, gamma=3)
@@ -111,12 +150,7 @@ class Trainer(object):
                                  'n_estimators': range(60, 220, 40),
                                  'learning_rate': [0.5, 0.1, 0.05, 0.01, 0.001],
                                  'gamma': [1, 3, 5]}
-        # elif estimator == 'LightGBM':
-        #     model = HistGradientBoostingClassifier()
-        #     self.model_params = {'loss': ['auto', 'binary_crossentropy', 'categorical_crossentropy'],
-        #                          'learning_rate': [0.5, 0.1, 0.05, 0.01, 0.001],
-        #                          'max_iter': [100, 500, 1000],
-        #                          'random_state': 0}
+
         else:
             model = Lasso()
         estimator_params = self.kwargs.get('estimator_params', {})
@@ -217,8 +251,7 @@ class Trainer(object):
             ('features', features_encoder),
             ('rgs', self.get_estimator())])
 
-
-    ## grid search
+    ## grid search here!
 
     def run(self):
         self.set_pipeline()
@@ -278,10 +311,11 @@ class Trainer(object):
     def mlflow_log_metric(self, key, value):
         self.mlflow_client.log_metric(self.mlflow_run.info.run_id, key, value)
 
+###--------------------------------------
 
 if __name__ == "__main__":
     # store the data in a DataFrame
-    N = 5000
+    N = 8000
     df = load_data(N)
         
     # set X and y
@@ -293,8 +327,10 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
     
     # train model
-    estimators = ['Linear', 'Lasso', 'Ridge', 'KNN',
-                   'xgboost', 'GBM', 'RandomForest'] # 'Ada', 'Stacking', 'Voting', 'Bagging', 'LightGBM'
+    estimators = ['Bagging', 'Ada', 'Stacking', 
+                  'Voting', 'GBR', 'xgboost']  
+    # 'Linear', 'Lasso', 'Ridge', 'KNN',
+    # 'RandomForest'
     for estimator in estimators:
         params = {'estimator': estimator,
                   'feateng': ['runtime', 'country', 'genre',
