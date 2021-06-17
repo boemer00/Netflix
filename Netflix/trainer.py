@@ -327,8 +327,10 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
     
     # train model
-    estimators = ['Bagging', 'Ada', 'Stacking', 
-                  'Voting', 'GBR', 'xgboost']  
+    estimators = ['GBR'] 
+    
+    #, 'Ada', 'Stacking', 
+    # 'Voting', 'GBR', 'xgboost']  
     # 'Linear', 'Lasso', 'Ridge', 'KNN',
     # 'RandomForest'
     for estimator in estimators:
