@@ -80,17 +80,26 @@ class Trainer(object):
         #     model = AdaBoostRegressor(base_estimator=GradientBoostingRegressor(),
         #                               n_estimators=100,
         #                               loss='linear')                            
-        # elif estimator == 'Stacking':
-        #     estimators_temp = [('gbr', GradientBoostingRegressor()),
-        #                        ('rid', Ridge())] 
-        #     model = StackingRegressor(estimators=[est for est in estimators_temp],
-        #                               final_estimator=RandomForestRegressor(n_estimators=10,
-        #                                                                     random_state=0))
+        elif estimator == 'Stacking':
+            model = StackingRegressor(
+                estimators=GradientBoostingRegressor({
+                    'rgs__loss': ['huber'],
+                    'rgs__learning_rate': [0.07, 0.05, 0.03],
+                    'rgs__max_features': [11, 12, 13, 14],
+                    'rgs__n_estimators': [80, 100, 120],
+                    'rgs__max_depth' : [7, 8, 9 ]}),
+                final_estimator=XGBRegressor({
+                    'rgs__max_depth': range(24, 29, 1),
+                    'rgs__n_estimators': range(120, 160, 5),
+                    'rgs__learning_rate': [0.05, 0.1, 0.3],
+                    'rgs__gamma': [0, 1]}))
+
+            
         # elif estimator == 'Voting':
         #     model = VotingRegressor([('r1', LinearRegression()),
         #                              ('r2', RandomForestRegressor(n_estimators=10, random_state=0)),
         #                              ('r3', GradientBoostingRegressor())])    
-        elif estimator == 'GBM':
+        elif estimator == 'GBR':
             model = GradientBoostingRegressor()
             self.model_params = {'rgs__loss': ['huber'], #'ls',
                                  'rgs__learning_rate': [0.07, 0.05, 0.03], #1
@@ -121,23 +130,6 @@ class Trainer(object):
                                  #subsample: 0.8
                                 # colsample_bytree: 1
        
-                #    model = XGBClassifier(silent=False, 
-                #                   scale_pos_weight=1,
-                #                   learning_rate=0.01,  
-                #                   colsample_bytree = 0.4,
-                #                   subsample = 0.8,
-                #                   objective='binary:logistic', 
-                #                   n_estimators=1000, 
-                #                   reg_alpha = 0.3,
-                #                   max_depth=4, 
-                #                   gamma=10)
-       
-        # elif estimator == 'LightGBM':
-        #     model = HistGradientBoostingClassifier()
-        #     self.model_params = {'loss': ['auto', 'binary_crossentropy', 'categorical_crossentropy'],
-        #                          'learning_rate': [0.5, 0.1, 0.05, 0.01, 0.001],
-        #                          'max_iter': [100, 500, 1000],
-        #                          'random_state': 0}
         else:
             model = Lasso()
         estimator_params = self.kwargs.get('estimator_params', {})
@@ -329,8 +321,8 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
     
     # train model
-    estimators = ['GBM', 'xgboost'] # 'Linear', 'Lasso', 'Ridge', 'KNN', 'GBM', 'RandomForest', 'xgboost']
-    # 'Ada', 'Stacking', 'Voting', 'Bagging', 'LightGBM'
+    estimators = ['Stacking'] # 'GBR', 'xgboost', 'Ada', 'Voting', 'Bagging'
+    # 'Linear', 'Lasso', 'Ridge', 'KNN', 'GBM', 'RandomForest'
     
     best_results = {}
     for estimator in estimators:
