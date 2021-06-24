@@ -1,17 +1,21 @@
-# import os
-# #from google.cloud import storage
-# from termcolor import colored
-# from Netflix.params import BUCKET_NAME, MODEL_NAME, MODEL_VERSION
+import os
+from google.cloud import storage
+from termcolor import colored
+from Netflix.params import BUCKET_NAME, MODEL_NAME, MODEL_VERSION
 
+""" Create a new GCP bucket and storage """
+
+# not used for this project, we already had a project bucket on GCP.
+# press "cmd + /" to uncomment 
 
 # def storage_upload(rm=False):
 #     client = storage.Client().bucket(BUCKET_NAME)
 
-#     local_model_name = 'model.joblib'
+#     local_model_name = "model.joblib"
 #     storage_location = f"models/{MODEL_NAME}/{MODEL_VERSION}/{local_model_name}"
 #     blob = client.blob(storage_location)
-#     blob.upload_from_filename('model.joblib')
-#     print(colored(f"=> model.joblib uploaded to bucket {BUCKET_NAME} inside {storage_location}",
-#                   "green"))
+#     blob.upload_from_filename("model.joblib")
+#     print(colored(f"=> model.joblib uploaded to bucket {BUCKET_NAME} inside {storage_location}", "green"))
+    
 #     if rm:
-#         os.remove('model.joblib')
+#         os.remove("model.joblib")

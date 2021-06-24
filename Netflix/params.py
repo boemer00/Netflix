@@ -7,7 +7,7 @@ EXPERIMENT_NAME = "[UK] [London] [PDR] netflix"
 
 PATH_TO_LOCAL_MODEL = 'model.joblib'
 
-AWS_BUCKET_TEST_PATH = "s3://wagon-public-datasets/taxi-fare-test.csv"  ## check new path
+AWS_BUCKET_TEST_PATH = "s3://wagon-public-datasets/netflix.csv"  ## not in use for this project
 
 
 ### GCP configuration - - - - - - - - - - - - - - - - - - -
@@ -24,10 +24,11 @@ BUCKET_NAME = 'wagon-data-597-netflix'
 
 ##### Data  - - - - - - - - - - - - - - - - - - - - - - - -
 
-# train data file location
-# /!\ here you need to decide if you are going to train using the provided and uploaded data/train_1k.csv sample file
+# train data file location 
+# /!\ here you need to decide if you are going to train using part of the file
 # or if you want to use the full dataset (you need need to upload it first of course)
-BUCKET_TRAIN_DATA_PATH = 'XXXX'
+# BUCKET_TRAIN_DATA_PATH = 'XXXX' 
+# --> Check trainer.py for the dataset
 
 ##### Training  - - - - - - - - - - - - - - - - - - - - - -
 
