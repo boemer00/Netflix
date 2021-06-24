@@ -1,11 +1,9 @@
-from types import FunctionType
 import joblib
-import requests
 import numpy as np
 import pandas as pd
 
 from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor, BaggingRegressor
@@ -30,6 +28,7 @@ from memoized_property import memoized_property
 
 MLFLOW_URI='https://mlflow.lewagon.co/'
 
+
 class Trainer(object):
     ESTIMATOR = "Linear"
     EXPERIMENT_NAME = "[UK] [London] [PDR] netflix"
@@ -44,7 +43,6 @@ class Trainer(object):
         self.kwargs = kwargs
         self.X = X
         self.y = y
-        
         # for MLFlow
         self.experiment_name = EXPERIMENT_NAME
         
@@ -159,15 +157,14 @@ class Trainer(object):
         print(colored(model.__class__.__name__, 'red'))
         return model
         
-        
+
     def set_experiment_name(self, experiment_name):
         """ defines the experiment name for MLFlow """
         self.experiment_name = experiment_name
     
-    
+    # feature engineering pipeline blocks
     def set_pipeline(self):
         """ defines the pipeline as a class attribute """
-        # feature engineering pipeline blocks
         feateng_steps = self.kwargs.get('feateng', ['runtime', 'country', 'language',
                                                     'genre', 'age', 'rated', 'released',
                                                     'writer', 'director', 'actors', 'production'])
@@ -224,7 +221,6 @@ class Trainer(object):
             ('production_transformer', FunctionTransformer(np.reshape, kw_args={'newshape': -1})), 
             ('production_vectorizer', CountVectorizer(token_pattern='[a-zA-Z][a-z -]+', max_features=10))])
         
-        
         # define default feature engineering blocks
         feateng_blocks = [
             ('runtime', pipe_runtime_features, ['Runtime']),
@@ -237,31 +233,29 @@ class Trainer(object):
             ('director', pipe_director_features, ['Director']),
             ('actors', pipe_actors_features, ['Actors']),
             ('language', pipe_language_features, ['Language']),
-            ('production', pipe_production_features, ['Production'])
-        ]
+            ('production', pipe_production_features, ['Production'])]
         
         # filter out some blocks according to input parameters
         for block in feateng_blocks:
             if block[0] not in feateng_steps:
                 feateng_blocks.remove(block)
 
-        features_encoder = ColumnTransformer(feateng_blocks, n_jobs=None, remainder='drop')
+        features_encoder = ColumnTransformer(feateng_blocks,
+                                             n_jobs=None,
+                                             remainder='drop')
 
         self.pipeline = Pipeline(steps=[
             ('features', features_encoder),
             ('rgs', self.get_estimator())])
 
-    ## grid search here!
+###--------------------------------------
 
+# Run pipeline
     def run(self):
         self.set_pipeline()
         self.mlflow_log_param('model', 'Linear')
         self.pipeline.fit(self.X, self.y)
         print('pipeline fitted')
-        
-    # def fit_pipeline(self):
-    #     self.pipeline = self.pipeline.fit(self.X, self.y)
-    #     print('pipeline fitted')
         
     def evaluate(self, X_test, y_test):
         """ evaluates the pipeline on X and return the RMSE """
@@ -286,6 +280,8 @@ class Trainer(object):
         """ save the model into a .joblib format """
         joblib.dump(self.pipeline, 'model.joblib')
         print(colored('model.joblib saved locally', 'green'))
+
+###--------------------------------------
 
  # MLFlow methods
     @memoized_property
@@ -328,11 +324,7 @@ if __name__ == "__main__":
     
     # train model
     estimators = ['GBR'] 
-    
-    #, 'Ada', 'Stacking', 
-    # 'Voting', 'GBR', 'xgboost']  
-    # 'Linear', 'Lasso', 'Ridge', 'KNN',
-    # 'RandomForest'
+
     for estimator in estimators:
         params = {'estimator': estimator,
                   'feateng': ['runtime', 'country', 'genre',
