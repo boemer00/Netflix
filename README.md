@@ -1,10 +1,19 @@
-# Data analysis
-- Document here the project: Netflix
-- Description: Project Description
-- Data Source:
-- Type of analysis:
+# Movie score prediction interface for streaming companies
 
-Please document the project the better you can.
+![](/main_image.png)
+
+# Overall
+Our project helps streaming companies, such as Netflix, decide what content their users enjoy. We have built and deployed a machine learning model that identifies the relationship between features and user scores. Ultimately, it can predict how well-received new content will be, before companies spend on licences or original productions--reducing the risk of dud content.
+
+# Sources
+We have extracted data from two sources:
+- the [kaggle dataset](https://www.kaggle.com/netflix-inc/netflix-prize-data)
+- [IMDb developer](https://developer.imdb.com/) using API requests
+
+# Machine Learning Model
+We have created a pipeline which transforms raw data and fits multiple models using regression techniques. We tested both individual models (e.g. Linear Regression, Lasso, Ridge, KNN) and emsemble methods (e.g. Voting, Stacking, Ada). Our model achieved the best result, measure by RMSE (0.3), through Gradient Boosting Regressor.
+
+------------------------------------
 
 # Startup the project
 
@@ -64,7 +73,7 @@ cd Netflix
 pip install -r requirements.txt
 make clean install test                # install and test
 ```
-Functionnal test with a script:
+Functional test with a script:
 
 ```bash
 cd
