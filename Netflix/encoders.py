@@ -5,6 +5,7 @@ import numpy as np
 from datetime import datetime
 from sklearn.base import BaseEstimator, TransformerMixin
 
+
 def load_data(n):
     """ upload the df_train.csv """
     df = pd.read_csv('raw_data/df_train.csv', nrows=n)
@@ -22,7 +23,7 @@ def drop_columns(df):
 
 
 class CleanRuntimeEncoder(BaseEstimator, TransformerMixin):
-    """ class clean runtime encoder """
+    # clean runtime encoder(CustomEncoder):
     def __init__(self):
         pass
 
@@ -46,14 +47,14 @@ class CleanRuntimeEncoder(BaseEstimator, TransformerMixin):
 
 
 class CleanLanguageEncoder(BaseEstimator, TransformerMixin):
-    """ class clean language encoder """
+    # clean language encoder(CustomEncoder):
     def __init__(self):
         pass
         
     def include_english(self, row):
         # replace with other frequent values
         x = row[0]
-        if "english" in x.lower():
+        if 'english' in x.lower():
             return [1]
         return [0]
             
@@ -66,7 +67,7 @@ class CleanLanguageEncoder(BaseEstimator, TransformerMixin):
 
 
 class CleanCountryEncoder(BaseEstimator, TransformerMixin):
-    """ class clean country encoder """
+    # clean country encoder(CustomEncoder):
     def __init__(self):
         pass
         
@@ -86,23 +87,6 @@ class CleanCountryEncoder(BaseEstimator, TransformerMixin):
     def fit(self, x, y=None):
         return self
 
-    
-# --> NLP as a future project/next step
-# class CleanPlotEncoder(BaseEstimator, TransformerMixin):
-#     # class clean plot encoder(CustomEncoder):
-#     def __init__(self):
-#         pass
-        
-#     def clean_plot(self, row):
-#         x = row[0]
-#         x = x.replace(np.nan,'unknown')
-            
-#     def transform(self, x, y=None):
-#         final = np.array([self.clean_country(row) for row in x])
-#         return final
-
-#     def fit(self, x, y=None):
-#         return self
 
 class CleanReleasedEncoder(BaseEstimator, TransformerMixin):
     """ class clean released encoder """
@@ -123,13 +107,12 @@ class CleanRatedEncoder(BaseEstimator, TransformerMixin):
         pass
         
     def clean_rated(self, row):
-        # group different Rated labels
+        # Taking the first elemnt if the list
         x = row[0]
         # group ratings 
         kids = ['TV-G', 'TV-PG', 'Kid', 'TV-Y7', 'TV-Y7-FV', 'TV-Y', 'E']
         teens = ['TV-13', 'TV-14', 'PG-13', 'PG', 'M']
         over_17 = ['TV-MA', 'NC-17', 'R', '18 and over', 'Unrated', 'UNRATED']
-        # general = ['G', 'APPROVED', 'Passed', 'M/PG', 'Approved', 'GP', 'X']
 
         if x in kids:
             return ['kids']
@@ -165,7 +148,9 @@ class CleanAgeEncoder(BaseEstimator, TransformerMixin):
     def fit(self, x, y=None):
         return self
 
-###--------------------------------------
+
+## -----------------------------
+   
    
 if __name__ == "__main__":
     from sklearn.pipeline import Pipeline
