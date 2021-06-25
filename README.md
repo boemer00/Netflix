@@ -1,4 +1,4 @@
-# Movie score prediction interface for streaming companies
+# Movie Score Predictor for Streaming Companies
 
 ![](/main_image.png)
 
@@ -11,7 +11,7 @@ We have extracted data from two sources:
 - [IMDb developer](https://developer.imdb.com/) using API requests
 
 # Machine Learning Model
-We have created a pipeline which transforms raw data and fits multiple models using regression techniques. We tested both individual models (e.g. Linear Regression, Lasso, Ridge, KNN) and emsemble methods (e.g. Voting, Stacking, Ada). Our model achieved the best result, measure by RMSE (0.3), through Gradient Boosting Regressor.
+We have created a pipeline which transforms raw data and fits multiple models using regression techniques. We tested both individual models (e.g. Linear Regression, Lasso, Ridge, KNN) and emsemble methods (e.g. Voting, Bagging, Stacking, Ada). Our model achieved the best result, measure by RMSE (0.3), through Gradient Boosting Regressor.
 
 ------------------------------------
 
